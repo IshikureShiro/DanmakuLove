@@ -1,2 +1,2 @@
 # DanmakuLove
-A Danmaku framework powered by Löve
+A Danmaku framework powered by Löve.
