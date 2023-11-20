@@ -267,13 +267,13 @@ end
 ---@param n integer
 ---@param direction? number
 ---@param tldata BulletTimelineData
----@param spread? number
+---@param spread? number bullet spread in degrees
 ---@param offset? number
 function BulletManager:fan(x, y, n, direction, tldata, spread, offset, ...)
 	direction = direction or Player:getDirection(x, y)
 	spread = spread and math.rad(spread) or math.rad(360)
 
-	local spreadstep = spread / (n + 1)
+	local spreadstep = spread / n
 
 	for i = 1, n do
 		local b = self:spawn(tldata.data, x, y, tldata.timeline, ...)
