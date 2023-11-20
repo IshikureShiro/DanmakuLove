@@ -1,8 +1,8 @@
 ---@class CharacterData
 local CharacterData = {
 	bullet = nil,		---@type BulletData
-	speed = 200,
-	focusedSpeed = 100,
+	speed = 2,
+	focusedSpeed = 1,
 	size = 3,
 	grazeSize = 15,
 	magnetSize = 40

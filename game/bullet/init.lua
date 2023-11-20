@@ -26,7 +26,7 @@ local Bullet = {
 	playerOwned = false,
 	---@type Action
 	timeline = nil,
-	speed = 200.0,
+	speed = 1.5,
 	size = 2,
 	scale = 1,
 	damage = 1,
@@ -99,7 +99,7 @@ function Bullet:update(dt)
 	end
 
 	if self.timeline then
-		local timelineValid = self.timeline:update(dt)
+		local timelineValid = self.timeline:update(Game.ticktime)
 
 		if not timelineValid then
 			self.timeline = nil
@@ -114,9 +114,11 @@ function Bullet:update(dt)
 end
 
 function Bullet:moveTo(x, y)
+	local ox, oy = self.x, self.y
 	self.x = x
 	self.y = y
 	self.collider:moveTo(self.x, self.y)
+	self.events.move(self.x - ox, self.y - oy)
 end
 
 function Bullet:isActive()
@@ -229,13 +231,22 @@ end
 
 ---@param b Bullet
 ---@param stopself? boolean
-function Bullet:connect(b, stopself)
-	self:followMovement(b, stopself)
-	self:followRotation(b)
+---@param stayOnDestroy? boolean
+---@return table movereg
+---@return table rotreg
+function Bullet:connect(b, stopself, stayOnDestroy)
+	local mreg = self:followMovement(b, stopself)
+	local rreg = self:followRotation(b)
+	if stayOnDestroy then
+		b.events.destroy:unregister(mreg)
+		b.events.destroy:unregister(rreg)
+	end
+	return mreg, rreg
 end
 
 ---@param b Bullet
 ---@param stopself? boolean
+---@return table reg
 function Bullet:followMovement(b, stopself)
 	local mreg = {}
 	local ov = self.velocity
@@ -259,9 +270,11 @@ function Bullet:followMovement(b, stopself)
 	b.events.destroy:register(mreg, function (...)
 		_unreg()
 	end)
+	return mreg
 end
 
 ---@param b Bullet
+---@return table reg
 function Bullet:followRotation(b)
 	local rreg = {}
 	local function _unreg()
@@ -278,6 +291,7 @@ function Bullet:followRotation(b)
 	b.events.destroy:register(rreg, function (...)
 		_unreg()
 	end)
+	return rreg
 end
 
 return Bullet

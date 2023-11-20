@@ -1,7 +1,7 @@
 local bvis = require "game.bullet.vis"
 
 local pulse_scale = 3.0
-local pulse_max = .2
+local pulse_max = 40
 
 local scale_curve = love.math.newBezierCurve(
 	 0, .5,

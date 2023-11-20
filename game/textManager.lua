@@ -1,5 +1,5 @@
-local fadein_speed = 1.0
-local fadeout_speed = 1.0
+local fadein_speed = .01
+local fadeout_speed = .01
 
 local min_fontsize = 5
 local max_fontsize = 30
@@ -47,7 +47,7 @@ local Text = {
 	fadeout_speed = fadeout_speed,
 	transform = nil,	---@type love.Transform
 	font = fonts.cinzel_reg[11],
-	fadeTimer = 3,
+	fadeTimer = 300,
 }
 
 ---@class TextManager.image : TextManager.text
@@ -160,7 +160,7 @@ function TextManager:add(content, data, t)
 		g = data.g or 1,
 		b = data.b or 1,
 		a = data.a or 1,
-		fadeTimer = data.time or 4,
+		fadeTimer = data.time or 400,
 		fadein_speed = data.fadein_speed or fadein_speed,
 		fadeout_speed = data.fadeout_speed or fadeout_speed,
 		font = data.font or fonts.cinzel_reg[size],
@@ -169,7 +169,7 @@ function TextManager:add(content, data, t)
 	local x, y = text.transform:transformPoint(0, 0)
 	text.x_t = data.x_t or x
 	text.y_t = data.y_t or y
-	text.move_speed = data.move_speed or 1.0
+	text.move_speed = data.move_speed or .01
 	target[text] = text
 	return text
 end

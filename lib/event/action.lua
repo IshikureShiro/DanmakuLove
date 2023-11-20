@@ -13,12 +13,9 @@ local Action = {
     onCancel = nil,
 	---@type fun(self:self):...
 	getArgs = nil,
-    delta = 0.0,
-	overshoot = 0.0,
 	runtime = 0.0,
+	delta = 1,
 	start = 0.0, -- time at the start of current update
-	---@type number|fun():number|nil
-	theshhold = nil,
 }
 
 ---@param ... any
@@ -44,32 +41,14 @@ function Action:delayUnitl(f)
 end
 
 function Action:delay(time)
-    local elapsed = 0.0
-	time = time or 0.0
-	if time == 0 then
-		elapsed = elapsed - 0.00001
-	end
-	if self.overshoot > 0 then
-		elapsed = elapsed + self.overshoot
-		self.overshoot = 0
-	end
-    while elapsed < time do
-        elapsed = elapsed + self.delta
-        coroutine.yield()
+	time = time or 1
+    while time > 0 do
+        time = time - self.delta
+		self.delta = self.delta + time
+		if time >= 0 then
+			coroutine.yield()
+		end
     end
-	if time > 0 then
-		self.overshoot = math.abs(elapsed - time)
-	end
-end
-
-function Action:checkThreshhold()
-	if not self.theshhold then
-		return
-	end
-	local tt = type(self.theshhold)
-	if Funcs.elapsed(self.start) > (tt == "number" and self.theshhold or self.theshhold()) then
-		self:delay()
-	end
 end
 
 ---@param dt number

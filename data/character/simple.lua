@@ -14,6 +14,6 @@ return chdata:create{
 		end,
 		playerOwned = true,
 	},
-	speed = 200,
-	focusedSpeed = 100
+	speed = 2,
+	focusedSpeed = 1
 }

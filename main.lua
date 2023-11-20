@@ -38,7 +38,12 @@ do
 			return fun(t, ...)
 		end
 	end
-	
+
+	---@param time number
+	function Funcs.elapsed(time)
+		return love.timer.getTime() - time
+	end
+
 	---@diagnostic disable-next-line: lowercase-global
 	wraptfunc = function(t, fun)
 		return t, Funcs.wrap(t, fun)
@@ -92,6 +97,7 @@ local memGraph
 local dtGraph
 
 Game = {
+	devrate = 120,
 	scale = 1.,
 	screenWidth = 0,
 	screenHeight = 0,
@@ -106,8 +112,15 @@ Game = {
 	width  = 0,
 	height = 0,
 	canvas = nil,	---@type love.Canvas
-	bounds = {}
+	bounds = {},
+	framerate = 60,
+	framedelay = 1.,
+	ticktime = 1,
 }
+
+function Game:secsToFrames(secs)
+	return math.ceil(self.devrate * secs)
+end
 
 function Game:setGameSize(w, h)
 	self.width = w
@@ -126,9 +139,15 @@ function Game:setGameScale()
 	self.scale = self.screenHeight / 480.0
 end
 
+function Game:setFramerate(rate)
+	self.framerate	= rate
+	self.framedelay	= 1 / rate
+	self.ticktime	= self.devrate / rate
+end
+
 function Game:update(dt)
 	Player:update(dt)
-	action.globalUpdate(dt)
+	action.globalUpdate(Game.ticktime)
 	bulletManager:update(dt)
 	text:update(dt)
 
@@ -167,6 +186,10 @@ end
 
 require "game.player"
 
+local function getAngle(x1, y1, x2, y2)
+	return math.atan2(y2 - y1, x2 - x1) + math.rad(180)
+end
+
 ---@param x number
 ---@param y number
 ---@return number angle angle in radians
@@ -174,6 +197,59 @@ function Player:getDirection(x, y)
 	return math.atan2(y - self.body.y, x - self.body.x) + math.rad(180)
 end
 
+--- see https://love2d.org/wiki/love.run
+function love.run()
+---@diagnostic disable-next-line: redundant-parameter, undefined-field
+	if love.load then love.load(love.arg.parseGameArguments(arg), arg) end
+
+	-- We don't want the first frame's dt to include time taken by love.load.
+	if love.timer then love.timer.step() end
+
+	local dt = 0
+
+	-- Main loop time.
+	return function()
+		local start = love.timer.getTime()
+		-- Process events.
+		if love.event then
+			love.event.pump()
+			for name, a,b,c,d,e,f in love.event.poll() do
+				if name == "quit" then
+---@diagnostic disable-next-line: undefined-field
+					if not love.quit or not love.quit() then
+						return a or 0
+					end
+				end
+---@diagnostic disable-next-line: undefined-field
+				love.handlers[name](a,b,c,d,e,f)
+			end
+		end
+
+		-- Update dt, as we'll be passing it to update
+		if love.timer then dt = love.timer.step() end
+
+		-- Call update and draw
+		if love.update then love.update(dt) end -- will pass 0 if love.timer is disabled
+
+		if love.graphics and love.graphics.isActive() then
+			love.graphics.origin()
+			love.graphics.clear(love.graphics.getBackgroundColor())
+
+			if love.draw then love.draw() end
+
+			love.graphics.present()
+		end
+
+		if not love.timer then
+			return
+		end
+		local elapsed = Funcs.elapsed(start)
+		if elapsed < Game.framedelay then
+			love.timer.sleep(Game.framedelay - elapsed)
+		end
+		-- if love.timer then love.timer.sleep(0.001) end
+	end
+end
 
 function love.load()
 	local debugGraph = require "lib.debugGraph"
@@ -184,6 +260,7 @@ function love.load()
 
 	Game:setGameSize(385, 448)
 	Game:setGameScale()
+	Game:setFramerate(60)
 
 	local test_level = require "data.timeline.stage.01.timeline"
 	test_level:run()
@@ -193,7 +270,7 @@ function love.load()
 end
 
 function love.update(dt)
-	Game:update(dt)
+	Game:update(Game.ticktime)
 
 	-- Update the graphs
 	fpsGraph:update(dt)

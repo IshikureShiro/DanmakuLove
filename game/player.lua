@@ -81,7 +81,7 @@ function Player:spawn()
 	action:fromFunc(function (act)
 		local done = bman:followCurve(self.body, 0, -50, 0, -90)
 		repeat
-			act:delay()
+			act:delay(Game.ticktime)
 		until done()
 		self.body.velocity = 1
 		act:delay(.5)

@@ -25,7 +25,7 @@ function BulletManager:abosrb(b)
 		local t = 0
 		local spd = 0.9 + (love.math.random() * .2)
 		repeat
-			t = t + (timeline.delta * spd)
+			t = t + (0.01 * spd)
 			b:moveTo(
 				math.lerp(b.x, Player.body.x, t),
 				math.lerp(b.y, Player.body.y, t)
@@ -49,20 +49,20 @@ function BulletManager:makePickupTL(spread)
 		local t = 0
 		b.velocity = 0
 		b.direction = math.rad(90)
-		b.speed = 150
+		b.speed = 1.5
 		repeat
-			t = t + tl.delta * 3
+			t = t + 0.1
 			b:moveTo(
 				math.lerp(b.x, x, t),
 				math.lerp(b.y, y, t)
 			)
-			tl:delay()
-		until t >= 0.9
+			tl:delay(Game.ticktime)
+		until t >= .9
 		t = .1
 		repeat
-			t = t + tl.delta * 2
+			t = t + 0.01
 			b.velocity = t
-			tl:delay()
+			tl:delay(Game.ticktime)
 		until t >= 1
 		return true
 	end
@@ -269,20 +269,25 @@ end
 ---@param tldata BulletTimelineData
 ---@param spread? number bullet spread in degrees
 ---@param offset? number
+---@return Bullet[]
 function BulletManager:fan(x, y, n, direction, tldata, spread, offset, ...)
 	direction = direction or Player:getDirection(x, y)
-	spread = spread and math.rad(spread) or math.rad(360)
+	local actualspread = spread and math.rad(spread) or math.rad(360)
+	local res = {}
 
-	local spreadstep = spread / n
+	--- offset is needed when spread < 360
+	local spreadstep = actualspread / (n + (spread and 1 or 0))
 
 	for i = 1, n do
 		local b = self:spawn(tldata.data, x, y, tldata.timeline, ...)
-		b.direction = direction - (spread * .5)
+		b.direction = direction - (actualspread * .5)
 		b.direction = b.direction + i * spreadstep
 		if offset then
 			b:moveForward(offset)
 		end
+		table.insert(res, b)
 	end
+	return res
 end
 
 ---@param b Bullet
@@ -290,12 +295,20 @@ end
 ---@return Action
 function BulletManager:makeTL(b, tl)
 	return action:fromFunc(function(act)
+		local done = nil
 		repeat
-			act:delay()
-		until tl(act, b)
+			while act.delta > 0 do
+				done = done or tl(act, b)
+				if done then
+					break
+				end
+				act.delta = act.delta - 1
+			end
+			act:delay(Game.ticktime)
+		until done
 
 		while true do
-			act:delay()
+			act:delay(Game.ticktime)
 		end
 	end)
 end
