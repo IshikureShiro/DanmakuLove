@@ -136,7 +136,7 @@ end
 
 function Game:setGameScale()
 	self.screenWidth, self.screenHeight = love.window.getMode()
-	self.scale = self.screenHeight / 480.0
+	self.scale = self.screenHeight / (self.height + self.margins.bottom + self.margins.up)
 end
 
 function Game:setFramerate(rate)
