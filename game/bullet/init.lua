@@ -132,7 +132,6 @@ function Bullet:moveForward(dist)
 	local ty = math.sin(rot) * dist
 
 	self:moveTo(self.x + tx, self.y + ty)
-	self.events.move(tx, ty)
 end
 
 function Bullet:setScale(s)
@@ -232,10 +231,11 @@ end
 ---@param b Bullet
 ---@param stopself? boolean
 ---@param stayOnDestroy? boolean
+---@param rate? number
 ---@return table movereg
 ---@return table rotreg
-function Bullet:connect(b, stopself, stayOnDestroy)
-	local mreg = self:followMovement(b, stopself)
+function Bullet:connect(b, stopself, stayOnDestroy, rate)
+	local mreg = self:followMovement(b, stopself, rate)
 	local rreg = self:followRotation(b)
 	if stayOnDestroy then
 		b.events.destroy:unregister(mreg)
@@ -246,8 +246,10 @@ end
 
 ---@param b Bullet
 ---@param stopself? boolean
+---@param rate? number
 ---@return table reg
-function Bullet:followMovement(b, stopself)
+function Bullet:followMovement(b, stopself, rate)
+	rate = rate or 1
 	local mreg = {}
 	local ov = self.velocity
 	if stopself then
@@ -264,8 +266,8 @@ function Bullet:followMovement(b, stopself)
 	self.events.destroy:register(mreg, function (...)
 		_unreg()
 	end)
-	b.events.move:register(mreg, function (x, y)
-		self:moveTo(self.x + x, self.y + y)
+	b.events.move:register(mreg, function (dx, dy)
+		self:moveTo(self.x + (dx * rate), self.y + (dy * rate))
 	end)
 	b.events.destroy:register(mreg, function (...)
 		_unreg()
