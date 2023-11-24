@@ -53,6 +53,7 @@ end
 
 ---@param dt number
 ---@return boolean
+---@return any
 function Action:update(dt)
 	self.start = love.timer.getTime()
     self.delta = dt
@@ -65,7 +66,7 @@ function Action:update(dt)
 	if not ok then
 		log:warning("error in routine: ", err, debug.traceback())
 	end
-    return self:isValid()
+    return self:isValid(), err
 end
 
 ---@return boolean

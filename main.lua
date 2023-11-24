@@ -1,4 +1,6 @@
 Logger = require "lib.log"
+require "game.bulletFuncs"
+
 local bullet = require "game.bullet"
 local bulletManager = require "game.bulletManager"
 
