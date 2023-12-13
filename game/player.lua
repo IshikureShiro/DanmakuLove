@@ -120,6 +120,7 @@ function Player:setData(d)
 	Player.body.events.damage:register({}, function (...)
 	end)
 	Player.body.events.destroy:unregister(Player.body)
+	Player.body.events.update:unregister(Player.body)
 	Player.body.events.destroy:register({}, _die)
 
 	Player.grazeZone.health = -1

@@ -271,7 +271,7 @@ end
 ---@param offset? number
 ---@return Bullet[]
 function BulletManager:fan(x, y, n, direction, tldata, spread, offset, ...)
-	direction = direction or Player:getDirection(x, y)
+	direction = direction or Player.body:getDirectionFrom(x, y)
 	local actualspread = spread and math.rad(spread) or math.rad(360)
 	local res = {}
 
@@ -295,17 +295,19 @@ end
 ---@return Action
 function BulletManager:makeTL(b, tl)
 	return action:fromFunc(function(act)
-		local done = nil
+		local rep = false ---@type nil|boolean
 		repeat
 			while act.delta > 0 do
-				done = done or tl(act, b)
-				if done then
+				rep = rep or tl(act, b)
+				if not rep then
 					break
 				end
 				act.delta = act.delta - 1
 			end
 			act:delay(Game.ticktime)
-		until done
+		until not rep
+
+		b.events.timelineDone()
 
 		while true do
 			act:delay(Game.ticktime)

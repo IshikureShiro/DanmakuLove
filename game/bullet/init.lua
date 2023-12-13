@@ -4,13 +4,14 @@ local action = require "lib.event.action"
 local log = Logger:spec("Bullet")
 
 ---@class BulletEvents
----@field destroy 	Event
----@field collide 	Event
----@field damage  	Event
----@field move		Event
----@field rotate	Event
----@field update	Event
----@field draw		Event
+---@field destroy 		Event
+---@field collide 		Event
+---@field damage  		Event
+---@field move			Event
+---@field rotate		Event
+---@field update		Event
+---@field draw			Event
+---@field timelineDone	Event
 
 ---@class Bullet
 local Bullet = {
@@ -53,17 +54,19 @@ function Bullet:new(b)
 	b.collisions = {}
 	b.inactiveStack = {}
 	b.events = {
-		destroy = event:new(),
-		collide = event:new(),
-		damage  = event:new(),
-		move	= event:new(),
-		rotate	= event:new(),
-		update	= event:new(),
-		draw	= event:new(),
+		destroy 		= event:new(),
+		collide 		= event:new(),
+		damage  		= event:new(),
+		move			= event:new(),
+		rotate			= event:new(),
+		update			= event:new(),
+		draw			= event:new(),
+		timelineDone	= event:new()
 	}
 	b.events.destroy:register_wrapped(b, self.onDestroy)
 	b.events.collide:register_wrapped(b, self.onCollide)
 	b.events.damage:register_wrapped(b, self.onDamage)
+	b.events.update:register_wrapped(b, self.onUpdate)
 	return setmetatable(b, { __index = self })
 end
 
@@ -104,11 +107,7 @@ function Bullet:update(dt)
 		if not timelineValid then
 			self.timeline = nil
 		else
-			self:moveForward(self.velocity * self.speed * dt)
 			self.events.update(dt)
-			if self.checkCols then
-				self:checkCollisions()
-			end
 		end
 	end
 end
@@ -188,6 +187,10 @@ function Bullet:onCollide(other)
 	end
 end
 
+function Bullet:onUpdate(dt)
+	self:moveForward(self.velocity * self.speed * dt)
+end
+
 ---@param amt number
 ---@param src Bullet
 function Bullet:onDamage(amt, src)
@@ -195,6 +198,13 @@ function Bullet:onDamage(amt, src)
 	if self.health <= 0 then
 		self:destroy()
 	end
+end
+
+---@param x number
+---@param y number
+---@return number angle angle in radians
+function Bullet:getDirectionFrom(x, y)
+	return math.atan2(y - self.y, x - self.x) + Pi
 end
 
 function Bullet:makeCollider()

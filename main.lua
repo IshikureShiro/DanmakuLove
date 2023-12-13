@@ -189,14 +189,7 @@ end
 require "game.player"
 
 local function getAngle(x1, y1, x2, y2)
-	return math.atan2(y2 - y1, x2 - x1) + math.rad(180)
-end
-
----@param x number
----@param y number
----@return number angle angle in radians
-function Player:getDirection(x, y)
-	return math.atan2(y - self.body.y, x - self.body.x) + math.rad(180)
+	return math.atan2(y2 - y1, x2 - x1) + Pi
 end
 
 --- see https://love2d.org/wiki/love.run
@@ -262,7 +255,7 @@ function love.load()
 
 	Game:setGameSize(385, 448)
 	Game:setGameScale()
-	Game:setFramerate(60)
+	Game:setFramerate(120)
 
 	local test_level = require "data.timeline.stage.01.timeline"
 	test_level:run()

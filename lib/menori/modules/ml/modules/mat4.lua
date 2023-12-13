@@ -155,6 +155,7 @@ function mat4_mt:to_temp_transform_object()
 		e[ 1], e[ 2], e[ 3], e[ 4],
 		e[ 5], e[ 6], e[ 7], e[ 8],
 		e[ 9], e[10], e[11], e[12],
+---@diagnostic disable-next-line: redundant-parameter
 		e[13], e[14], e[15], e[16]
 	)
 	return temp_transform
