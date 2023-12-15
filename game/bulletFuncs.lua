@@ -218,7 +218,7 @@ end
 
 ---@overload fun(bullet:BulletData, args:SpawnArgs?):Bullet
 ---@overload fun(bullet:BulletData, tl:(fun(tl:BulletTimeline):boolean?), args:SpawnArgs?):Bullet
----@overload fun(bullet:BulletData, x:number, y:number, dir:(number|Player|Bullet), tl:(fun(tl:BulletTimeline):boolean?), args:SpawnArgs?)
+---@overload fun(bullet:BulletData, x:number, y:number, dir:(number|Player|Bullet), tl:(fun(tl:BulletTimeline):boolean?), args:SpawnArgs?):Bullet
 function Spawn(...)
 	local params = {...}
 	local stacke = _peekstack()
@@ -235,6 +235,11 @@ function Spawn(...)
 		bu		= params[1]
 		f		= params[2]
 		args	= params[3] or {} ---@type SpawnArgs
+
+		if stackebul then
+			x, y	= _modPos(x, y, stackebul.x, stackebul.y, args.spawnType)
+			dir		= _modDir(stackebul.direction, dir, x, y, args.spawnType)
+		end
 	elseif type(params[5]) == "function" then
 		bu		= params[1]
 		x		= params[2]
