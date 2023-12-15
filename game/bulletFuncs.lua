@@ -412,6 +412,7 @@ function Fan(...)
 		local btl = _makecomplextlB(bu_inc, f, i)
 		local i_bul = bman:spawn(bu_inc, args.x, args.y, btl.timeline)
 		i_bul.direction = dir + c_dir
+		i_bul:moveForward(args.offset or 0)
 		i_bul.velocity = 0
 		i_bul.events.timelineDone:register({}, function (...)
 			i_bul:destroy()
