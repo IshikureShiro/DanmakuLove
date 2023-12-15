@@ -36,19 +36,13 @@ local function _multiherit(...)
 	})
 end
 
--- TODO
--- better spread / circle (direction, delay)
--- 
--- 
--- 
--- 
--- 
--- 
-
 ---@class ActionStackElement
 ---@field [1] Action
 ---@field [2] Bullet|nil
 ---@field [4] boolean
+
+---@class SpawnArgs
+---@field spawnType? SpawnType
 
 ---@class StackArgs
 ---@field ftb? boolean
@@ -158,42 +152,6 @@ local function _makecomplextl(f, ...)
 	return _makecomplextlB(_getbullet(), f, ...)
 end
 
----@overload fun(bullet:BulletData):Bullet
-function Spawn(...)
-	local stacke = _peekstack()
-	local stackebul = stacke and stacke[2]
-	local dir = .0
-	local x, y = 0, 0
-
-	local bu = ...
-	if stackebul then
-		dir = stackebul.direction
-		x, y = stackebul.x, stackebul.y
-	end
-	local b = bman:spawn(bu, x, y, function (timeline, b)
-	end)
-	b.direction = dir
-	return b
-
-	-- local stacke = #actionstack > 0 and actionstack[#actionstack]
-	-- local relbul = stacke and stacke[2]
-	-- tlargs = tlargs or {}
-	-- --- relative
-	-- if relbul then
-	-- 	if not dir then
-	-- 		dir = relbul.direction
-	-- 	end
-	-- 	x = x + relbul.x
-	-- 	y = y + relbul.y
-	-- --- absolute
-	-- else
-		
-	-- end
-
-	-- local b = bman:spawn(_getbullet(), x, y, _makecomplextl(f, unpack(tlargs)).timeline, ...)
-	-- b.direction = dir or Player.body:getDirectionFrom(x, y)
-	-- return b
-end
 
 ---@param d nil|integer|fun(i:integer):integer
 ---@return fun(i:integer)
@@ -257,6 +215,54 @@ local function _modPos(x, y, rx, ry, st)
 	return x, y
 end
 
+
+---@overload fun(bullet:BulletData, args:SpawnArgs?):Bullet
+---@overload fun(bullet:BulletData, tl:fun(tl:BulletTimeline):boolean?, args:SpawnArgs?):Bullet
+---@overload fun(bullet:BulletData, x:number, y:number, dir:(number|Player|Bullet), tl:fun(tl:BulletTimeline):boolean?, args:SpawnArgs?)
+function Spawn(...)
+	local params = {...}
+	local stacke = _peekstack()
+	local stackebul = stacke and stacke[2]
+
+	local dir = .0
+	local x, y = 0, 0
+
+	local args	---@type SpawnArgs
+	local f		---@type fun(tl:BulletTimeline):boolean?
+	local bu	---@type BulletData
+
+	if type(params[2]) == "function" then
+		bu		= params[1]
+		f		= params[2]
+		args	= params[3] or {} ---@type SpawnArgs
+	elseif type(params[5]) == "function" then
+		bu		= params[1]
+		x		= params[2]
+		y		= params[3]
+		dir		= params[4]
+		f		= params[5]
+		args	= params[6] or {} ---@type SpawnArgs
+
+		if stackebul then
+			x, y	= _modPos(x, y, stackebul.x, stackebul.y, args.spawnType)
+			dir		= _modDir(stackebul.direction, dir, x, y, args.spawnType)
+		end
+	elseif stackebul then
+		dir		= stackebul.direction
+		x, y	= stackebul.x, stackebul.y
+		bu		= params[1]
+		args	= params[2] or {} ---@type SpawnArgs
+		f		= function (tl) end
+	else
+		error("spawn called with invalid arguments/context")
+	end
+
+	local btl = _makecomplextlB(bu, f)
+	local b = bman:spawn(bu, x, y, btl.timeline)
+	b.direction = dir
+	return b
+end
+
 ---@overload fun(n:integer, dist:number, delay:(integer|fun(i:integer):integer), f:fun(tl:BulletTimeline, tl_i:integer), args:StackArgs?)
 ---@overload fun(n:integer, dist:number, delay:(integer|fun(i:integer):integer), dir:(number|Player|Bullet), f:fun(tl:BulletTimeline, tl_i:integer), args:StackArgs?)
 ---@overload fun(x:number, y:number, dir:(number|Player|Bullet), n:integer, dist:number, delay:(integer|fun(i:integer):integer), f:fun(tl:BulletTimeline, tl_i:integer), args:StackArgs?)
@@ -302,8 +308,8 @@ function Stack(...)
 		delay	= params[6]
 
 		if stackebul then
-			dir		= _modDir(0, params[3], x, y, args.spawntype)
 			x, y	= _modPos(x, y, stackebul.x, stackebul.y, args.spawntype)
+			dir		= _modDir(stackebul.direction, params[3], x, y, args.spawntype)
 		else
 			dir	= _modDir(0, params[3], x, y, args.spawntype)
 		end
@@ -321,7 +327,7 @@ function Stack(...)
 		target_b:moveForward(dist * n)
 	end
 	for i in Loop(1, n) do
-		local btl = _makecomplextl(f, i)
+		local btl = _makecomplextlB(bu_inc, f, i)
 		local i_b = bman:spawn(bu_inc, x, y, btl.timeline)
 		i_b.direction = target_b.direction
 		i_b.x = target_b.x
@@ -398,7 +404,7 @@ function Fan(...)
 	local _delay = _makeDelay(args.delay)
 
 	for i in Loop(1, args.count) do
-		local btl = _makecomplextl(f, i)
+		local btl = _makecomplextlB(bu_inc, f, i)
 		local i_bul = bman:spawn(bu_inc, args.x, args.y, btl.timeline)
 		i_bul.direction = dir + c_dir
 		i_bul.velocity = 0
