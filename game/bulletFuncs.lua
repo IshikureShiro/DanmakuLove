@@ -217,8 +217,8 @@ end
 
 
 ---@overload fun(bullet:BulletData, args:SpawnArgs?):Bullet
----@overload fun(bullet:BulletData, tl:fun(tl:BulletTimeline):boolean?, args:SpawnArgs?):Bullet
----@overload fun(bullet:BulletData, x:number, y:number, dir:(number|Player|Bullet), tl:fun(tl:BulletTimeline):boolean?, args:SpawnArgs?)
+---@overload fun(bullet:BulletData, tl:(fun(tl:BulletTimeline):boolean?), args:SpawnArgs?):Bullet
+---@overload fun(bullet:BulletData, x:number, y:number, dir:(number|Player|Bullet), tl:(fun(tl:BulletTimeline):boolean?), args:SpawnArgs?)
 function Spawn(...)
 	local params = {...}
 	local stacke = _peekstack()
